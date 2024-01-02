@@ -216,11 +216,11 @@ def make_pretrain_step(
             axis=-2,
         )
         #result = jnp.mean(cnorm(target[:, None, ...], orbitals[0])).real
-        result_standard = jnp.mean(cnorm(target[:, None, ...], orbitals[0])).real
-        result_SI = jnp.mean(sindist2(target[:, None, ...], orbitals[0])).real
+        standard = jnp.mean(cnorm(target[:, None, ...], orbitals[0])).real
+        SI = jnp.mean(sindist2(target[:, None, ...], orbitals[0])).real
 
-        shown=result_standard
-        trained=result_SI
+        shown=SI
+        trained=SI
 
         result=jax.lax.stop_gradient(shown-trained)+trained
       else:

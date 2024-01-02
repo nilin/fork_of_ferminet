@@ -287,6 +287,7 @@ def default() -> ml_collections.ConfigDict:
           'deterministic': False,  # Use a deterministic seed.
       },
       'pretrain': {
+          'SI': False,
           'method': 'hf',  # Currently only 'hf' is supported.
           'iterations': 1000,  # Only used if method is 'hf'.
           'basis': 'ccpvdz',  # Larger than STO-6G, but good for excited states
