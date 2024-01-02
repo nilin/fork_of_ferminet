@@ -263,6 +263,7 @@ def pretrain_hartree_fock(
     iterations: int = 1000,
     logger: Optional[Callable[[int, float], None]] = None,
     states: int = 0,
+    SI: bool=False
 ):
   """Performs training to match initialization as closely as possible to HF.
 
@@ -311,6 +312,7 @@ def pretrain_hartree_fock(
       electrons=electrons,
       full_det=network_options.full_det,
       states=states,
+      SI=SI
   )
   pretrain_step = constants.pmap(pretrain_step)
   pnetwork = constants.pmap(batch_network)
