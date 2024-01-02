@@ -124,6 +124,7 @@ def make_pretrain_step(
     electrons: Tuple[int, int],
     full_det: bool = False,
     states: int = 0,
+    SI: bool=False
 ):
   """Creates function for performing one step of Hartre-Fock pretraining.
 
@@ -217,10 +218,14 @@ def make_pretrain_step(
         )
         #result = jnp.mean(cnorm(target[:, None, ...], orbitals[0])).real
         standard = jnp.mean(cnorm(target[:, None, ...], orbitals[0])).real
-        SI = jnp.mean(sindist2(target[:, None, ...], orbitals[0])).real
+        sinloss = jnp.mean(sindist2(target[:, None, ...], orbitals[0])).real
 
-        shown=SI
-        trained=SI
+        shown=sinloss
+
+        if SI:
+          trained=sinloss
+        else:
+          trained=standard
 
         result=jax.lax.stop_gradient(shown-trained)+trained
       else:

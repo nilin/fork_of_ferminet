@@ -658,6 +658,7 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
         scf_approx=hartree_fock,
         iterations=cfg.pretrain.iterations,
         states=cfg.system.states,
+        SI=cfg.pretrain.SI,
     )
 
   # Main training
