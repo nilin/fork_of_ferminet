@@ -151,6 +151,13 @@ def make_pretrain_step(
     """One iteration of pretraining to match HF."""
 
     cnorm = lambda x, y: (x - y) * jnp.conj(x - y)  # complex norm
+
+    odot = lambda x, y: jnp.sum(jnp.conj(x)*y, axis=-1)  # complex dot product
+    sqoverlap=lambda x,y:jnp.abs(odot(x,y)**2) # squared overlap
+    sqnorm=lambda x:odot(x,x).real # squared norm
+    cos2 = lambda x, y: sqoverlap(x,y)/(sqnorm(x)*sqnorm(y))
+    sindist2=lambda x,y: 1-cos2(x,y) # squared sin distance
+
     def loss_fn(
         params: networks.ParamTree,
         data: networks.FermiNetData,
@@ -194,6 +201,7 @@ def make_pretrain_step(
 
       target = scf_orbitals(pos, electrons)
       orbitals = net_orbitals(params, pos, spins, data.atoms, data.charges)
+      #breakpoint()
       if full_det:
         dims = target[0].shape[:-2]  # (batch) or (batch, states).
         na = target[0].shape[-2]
@@ -207,7 +215,14 @@ def make_pretrain_step(
             ),
             axis=-2,
         )
-        result = jnp.mean(cnorm(target[:, None, ...], orbitals[0])).real
+        #result = jnp.mean(cnorm(target[:, None, ...], orbitals[0])).real
+        result_standard = jnp.mean(cnorm(target[:, None, ...], orbitals[0])).real
+        result_SI = jnp.mean(sindist2(target[:, None, ...], orbitals[0])).real
+
+        shown=result_standard
+        trained=result_SI
+
+        result=jax.lax.stop_gradient(shown-trained)+trained
       else:
         result = jnp.array([
             jnp.mean(cnorm(t[:, None, ...], o)).real
