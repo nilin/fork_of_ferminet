@@ -145,15 +145,15 @@ def make_pretrain_step(
     def sindist2(x, y, p=1, orbital_wise=False):
       if orbital_wise:
         xy=jnp.mean(jnp.conj(x)*y/p,axis=(0,-2))
-        xx=jnp.mean(jnp.abs(jnp.conj(x)*x/p),axis=(0,-2))
-        yy=jnp.mean(jnp.abs(jnp.conj(y)*y/p),axis=(0,-2))
+        xx=jnp.mean(jnp.abs(x**2/p),axis=(0,-2))
+        yy=jnp.mean(jnp.abs(y**2/p),axis=(0,-2))
       else:
         xy=jnp.mean(jnp.conj(x)*y/p)
-        xx=jnp.mean(jnp.abs(jnp.conj(x)*x/p))
-        yy=jnp.mean(jnp.abs(jnp.conj(y)*y/p))
-      xy2=jnp.abs(jnp.conj(xy)*xy)
-      cos2=xy2/(xx*yy)
-      return jnp.mean(1-cos2).real
+        xx=jnp.mean(jnp.abs(x**2/p))
+        yy=jnp.mean(jnp.abs(y**2/p))
+      
+      cos2=jnp.abs(xy**2)/(xx*yy)
+      return 1-jnp.mean(cos2)
 
     def loss_fn(
         params: networks.ParamTree, data: networks.FermiNetData, target: ...
@@ -281,6 +281,11 @@ def pretrain_hartree_fock(
   )
   logprob = 2.0 * pnetwork(params, positions, pmap_spins, atoms, charges)
 
+  psi2 = lambda pos: jnp.abs(jnp.linalg.det(eval_orbitals(scf_approx, pos, electrons)))**2
+  int_est=integrate(psi2,(1,1000,positions.shape[-1]),10.0)
+  int_test=integrate(lambda x: 1/(2*jnp.pi)**(3)*jnp.exp(-jnp.sum(x**2,axis=-1)/2),(1,1000,6),10.0)
+  breakpoint()
+  
   for t in range(iterations):
     target = eval_orbitals(scf_approx, data.positions, electrons)
     sharded_key, subkeys = kfac_jax.utils.p_split(sharded_key)
@@ -290,3 +295,12 @@ def pretrain_hartree_fock(
     if logger:
       logger(t, loss[0])
   return params, data.positions
+
+
+def integrate(f,shape,M):
+  pos=jax.random.uniform(jax.random.PRNGKey(0),shape=shape,minval=-M,maxval=M)
+  y=f(pos)
+  A=jnp.mean(y)
+  dims=jnp.prod(jnp.array(shape))//jnp.prod(jnp.array(y.shape))
+  V=(2*M)**dims
+  return A*V
