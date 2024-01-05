@@ -287,6 +287,7 @@ def pretrain_hartree_fock(
     f2=jnp.linalg.det(M2)
     return jnp.abs(f1*f2)**2
 
+  breakpoint()
   int_est=integrate(psi2,(1,1000,positions.shape[-1]),10.0)
   int_test=integrate(lambda x: 1/(2*jnp.pi)**(3)*jnp.exp(-jnp.sum(x**2,axis=-1)/2),(1,1000,6),10.0)
   breakpoint()
